@@ -7,8 +7,8 @@ CONFDIR=${PREFIX}/etc
 BINDIR=${PREFIX}/bin
 
 # these defines are for Linux
-LIBS=
-ARCH=linux
+#LIBS=
+#ARCH=linux
 
 # for Mac OS X and BSD systems that have getifaddr(), uncomment the next line
 #ARCH=bsd_with_getifaddrs
@@ -18,8 +18,8 @@ ARCH=linux
 
 
 # for solaris, uncomment the next two lines
-# LIBS=-lsocket -lnsl
-# ARCH=sun
+LIBS=-lsocket -lnsl
+ARCH=sunOS
 
 ${TGT}: Makefile ${TGT}.c 
 	${CC} -Wall -g -D${ARCH} -DPREFIX=\"${PREFIX}\" ${TGT}.c -o ${TGT} ${LIBS}
