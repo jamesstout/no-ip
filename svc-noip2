@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+ 
+#. /lib/svc/share/smf_include.sh
+
+set -e
+
+CONF_FILE="/usr/local/etc/no-ip2.conf"
+ENV="/usr/bin/env -i LANG=C PATH=/usr/local/bin:/usr/bin:/bin:/opt/sfw/bin:/usr/sfw/bin"
+
+function checkconfig() {
+
+	if [ ! -e "$CONF_FILE" ] ; then
+		echo "You need a /usr/local/etc/no-ip2.conf file to run noip2"
+		return 1
+	fi
+}
+
+function killRunning() {
+
+	declare -a PIDS=($(pgrep noip2))
+
+	if [ ${#PIDS[@]} -gt 0 ]; then
+		echo "noip2 already running, killing"
+		for pid in ${!PIDS[*]}
+    	do
+    		echo "running: /usr/local/bin/noip2 -K ${PIDS[$pid]}"
+    		eval $ENV /usr/local/bin/noip2 -K ${PIDS[$pid]}  > /dev/null 2>&1 
+    	done
+    	# wait and call self
+    	sleep 2
+    	killRunning
+    else
+    	return 0
+	fi
+
+	return 0
+}
+
+function start() {
+	checkconfig || return 1
+	killRunning || return 1
+	echo "Starting noip2 with $CONF_FILE"
+	eval $ENV /usr/local/bin/noip2 &
+}
+
+function stop() {
+	echo "Stopping noip2"
+	# send sterr/out to dev/null in case there is no currently running noip2 process
+	eval $ENV /usr/local/bin/noip2 -K $(pgrep -o -U nobody noip2) > /dev/null 2>&1 
+}
+
+case $1 in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart) # not actually called by SMF
+		echo "Restarting noip2 with $CONF_FILE"
+		stop
+		sleep 2
+		start
+	;;
+	*)
+		echo "Usage: /lib/svc/method/svc-noip2 start|stop|restart" >&2
+		exit 2
+	;;
+esac
